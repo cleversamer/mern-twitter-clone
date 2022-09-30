@@ -1,6 +1,4 @@
-# Project Title 🚀
-
-Simple overview of use/purpose.
+# Twitter Clone 🚀
 
 ## 🔴 Live Demo
 
@@ -8,7 +6,7 @@ Not live yet...
 
 ## Description
 
-An in-depth paragraph about your project and overview of use.
+Twitter Clone w/ MERN Stack & Socket.IO
 
 ## Getting Started
 

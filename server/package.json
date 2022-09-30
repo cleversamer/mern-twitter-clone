@@ -1,7 +1,7 @@
 {
-  "name": "server",
+  "name": "twitter-clone",
   "version": "1.0.0",
-  "description": "",
+  "description": "Twitter Clone w/ MERN Stack & Socket.IO",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
