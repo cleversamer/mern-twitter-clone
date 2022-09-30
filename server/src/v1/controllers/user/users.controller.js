@@ -98,8 +98,8 @@ module.exports.resetPassword = async (req, res, next) => {
 
 module.exports.sendForgotPasswordCode = async (req, res, next) => {
   try {
-    const { email } = req.query;
-    const user = await usersService.findUserByEmail(email);
+    const { emailOrUsername } = req.query;
+    const user = await usersService.findUserByEmailOrUsername(emailOrUsername);
 
     if (!user) {
       const statusCode = httpStatus.NOT_FOUND;
@@ -110,7 +110,7 @@ module.exports.sendForgotPasswordCode = async (req, res, next) => {
     user.generatePasswordResetCode();
     const updatedUser = await user.save();
 
-    await emailService.forgotPasswordEmail(email, updatedUser);
+    await emailService.forgotPasswordEmail(user.email, updatedUser);
 
     res
       .status(httpStatus.OK)
@@ -122,8 +122,8 @@ module.exports.sendForgotPasswordCode = async (req, res, next) => {
 
 module.exports.handleForgotPassword = async (req, res, next) => {
   try {
-    const { email, code, newPassword } = req.body;
-    const user = await usersService.findUserByEmail(email);
+    const { emailOrUsername, code, newPassword } = req.body;
+    const user = await usersService.findUserByEmailOrUsername(emailOrUsername);
 
     if (!user) {
       const statusCode = httpStatus.NOT_FOUND;
@@ -165,12 +165,15 @@ module.exports.handleForgotPassword = async (req, res, next) => {
 module.exports.updateProfile = async (req, res, next) => {
   try {
     const user = req.user;
-    const { name, email, password } = req.body;
+    const { name, email, username, password } = req.body;
+    const avatar = req?.files?.avatar || null;
 
     const newUser = await usersService.updateProfile(
       user,
       name,
+      avatar,
       email,
+      username,
       password
     );
 
@@ -188,12 +191,15 @@ module.exports.updateProfile = async (req, res, next) => {
 ///////////////////////////// ADMIN /////////////////////////////
 module.exports.updateUserProfile = async (req, res, next) => {
   try {
-    const { userId, name, email, password } = req.body;
+    const { emailOrUsername, name, email, username, password } = req.body;
+    const avatar = req?.files?.avatar || null;
 
     const updatedUser = await usersService.updateUserProfile(
-      userId,
+      emailOrUsername,
       name,
+      avatar,
       email,
+      username,
       password
     );
 
@@ -203,11 +209,11 @@ module.exports.updateUserProfile = async (req, res, next) => {
   }
 };
 
-module.exports.validateUser = async (req, res, next) => {
+module.exports.verifyUser = async (req, res, next) => {
   try {
-    const { userId } = req.body;
+    const { emailOrUsername } = req.body;
 
-    const updatedUser = await usersService.validateUser(userId);
+    const updatedUser = await usersService.verifyUser(emailOrUsername);
 
     res.status(httpStatus.CREATED).json(_.pick(updatedUser, CLIENT_SCHEMA));
   } catch (err) {
@@ -217,9 +223,12 @@ module.exports.validateUser = async (req, res, next) => {
 
 module.exports.changeUserRole = async (req, res, next) => {
   try {
-    const { userId, role } = req.body;
+    const { emailOrUsername, role } = req.body;
 
-    const updatedUser = await usersService.changeUserRole(userId, role);
+    const updatedUser = await usersService.changeUserRole(
+      emailOrUsername,
+      role
+    );
 
     res.status(httpStatus.CREATED).json(_.pick(updatedUser, CLIENT_SCHEMA));
   } catch (err) {
@@ -227,14 +236,17 @@ module.exports.changeUserRole = async (req, res, next) => {
   }
 };
 
-module.exports.findUserByEmail = async (req, res, next) => {
+module.exports.findUserByEmailOrUsername = async (req, res, next) => {
   try {
     // This is come from `req.params` but added to `req.body`
     // in the validation middleware.
     // GET Requests don't accept body data.
-    const { email } = req.body;
+    const { emailOrUsername } = req.body;
 
-    const user = await usersService.findUserByEmail(email, true);
+    const user = await usersService.findUserByEmailOrUsername(
+      emailOrUsername,
+      true
+    );
 
     res.status(httpStatus.OK).json(_.pick(user, CLIENT_SCHEMA));
   } catch (err) {

@@ -70,9 +70,17 @@ const auth = Object.freeze({
     en: "Email is already used",
     ar: "البريد الإلكتروني مستخدم مسبقاً",
   },
+  usernameUsed: {
+    en: "Username is already used",
+    ar: "اسم المستخدم مستخدم مسبقاً",
+  },
+  emailOrUsernameUsed: {
+    en: "Email or username is already used",
+    ar: "البريد الإلكتروني أو اسم المستخدم مستخدم مسبقاً",
+  },
   incorrectCredentials: {
-    en: "Incorrect email or password",
-    ar: "البريد الإلكتروني أو كلمة المرور غير صحيح",
+    en: "Incorrect credentials",
+    ar: "بيانات الدخول غير صحيحة",
   },
   invalidName: {
     en: "Name should be (8 ~ 64 characters) length",
@@ -81,6 +89,14 @@ const auth = Object.freeze({
   invalidEmail: {
     en: "Invalid email address",
     ar: "البريد الإلكتروني غير صالح",
+  },
+  invalidUsername: {
+    en: "Invalid username",
+    ar: "اسم المستخدم غير صالح",
+  },
+  invalidEmailOrUsername: {
+    en: "Invalid username or email",
+    ar: "اسم المستخدم أو البريد الإلكتروني غير صالح",
   },
   invalidPassword: {
     en: "Password should be (8 ~ 32 characters) length",

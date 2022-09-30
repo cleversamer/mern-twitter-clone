@@ -7,8 +7,16 @@ const _ = require("lodash");
 
 module.exports.register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
-    const user = await authService.registerWithEmail(email, password, name);
+    const { name, email, username, password } = req.body;
+    const avatar = req?.files?.avatar || null;
+
+    const user = await authService.registerWithEmail(
+      email,
+      password,
+      name,
+      username,
+      avatar
+    );
 
     await emailService.registerEmail(email, user);
 
@@ -21,7 +29,7 @@ module.exports.register = async (req, res, next) => {
   } catch (err) {
     if (err.code === errors.codes.duplicateIndexKey) {
       const statusCode = httpStatus.BAD_REQUEST;
-      const message = errors.auth.emailUsed;
+      const message = errors.auth.emailOrUsernameUsed;
       err = new ApiError(statusCode, message);
     }
 
@@ -31,8 +39,12 @@ module.exports.register = async (req, res, next) => {
 
 module.exports.signin = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const user = await authService.signInWithEmail(email, password);
+    const { emailOrUsername, password } = req.body;
+
+    const user = await authService.signInWithEmailUsername(
+      emailOrUsername,
+      password
+    );
 
     const body = {
       user: _.pick(user, CLIENT_SCHEMA),

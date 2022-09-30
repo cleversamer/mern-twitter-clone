@@ -4,8 +4,15 @@ const { ApiError } = require("../../middleware/apiError");
 const httpStatus = require("http-status");
 const errors = require("../../config/errors");
 const usersService = require("./users.service");
+const localStorage = require("../storage/localStorage.service");
 
-module.exports.registerWithEmail = async (email, password, name) => {
+module.exports.registerWithEmail = async (
+  email,
+  password,
+  name,
+  username,
+  avatar
+) => {
   try {
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
@@ -14,7 +21,13 @@ module.exports.registerWithEmail = async (email, password, name) => {
       name,
       email,
       password: hashed,
+      username,
     });
+
+    if (avatar) {
+      const file = await localStorage.storeFile(avatar);
+      user.avatarURL = file.path;
+    }
 
     user.updateEmailVerificationCode();
 
@@ -24,9 +37,9 @@ module.exports.registerWithEmail = async (email, password, name) => {
   }
 };
 
-module.exports.signInWithEmail = async (email, password) => {
+module.exports.signInWithEmailUsername = async (emailOrUsername, password) => {
   try {
-    const user = await usersService.findUserByEmail(email);
+    const user = await usersService.findUserByEmailOrUsername(emailOrUsername);
 
     if (!user) {
       const statusCode = httpStatus.NOT_FOUND;

@@ -18,7 +18,10 @@ router
 
 router
   .route("/forgot-password")
-  .get([authValidator.emailValidator], usersController.sendForgotPasswordCode)
+  .get(
+    [authValidator.validateEmailOrUsername],
+    usersController.sendForgotPasswordCode
+  )
   .post(
     [authValidator.forgotPasswordValidator],
     usersController.handleForgotPassword
@@ -49,15 +52,15 @@ router.patch(
 );
 
 router.patch(
-  "/admin/validate-user",
+  "/admin/verify-user",
   [auth("updateAny", "user"), userValidator.validateVerifyUser],
-  usersController.validateUser
+  usersController.verifyUser
 );
 
 router.get(
   "/:role/:id",
   [auth("readAny", "user"), userValidator.validateFindUserByEmail],
-  usersController.findUserByEmail
+  usersController.findUserByEmailOrUsername
 );
 
 module.exports = router;

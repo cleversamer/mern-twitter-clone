@@ -2,16 +2,35 @@ const { Schema, model } = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const CLIENT_SCHEMA = ["_id", "name", "email", "role", "verified"];
+const CLIENT_SCHEMA = [
+  "_id",
+  "name",
+  "avatarURL",
+  "email",
+  "username",
+  "role",
+  "verified",
+];
 
 const SUPPORTED_ROLES = ["user", "admin"];
 
 const userSchema = new Schema(
   {
+    avatarURL: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     name: {
       type: String,
       trim: true,
       required: true,
+    },
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
     },
     email: {
       type: String,

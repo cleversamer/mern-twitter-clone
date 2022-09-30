@@ -3,7 +3,12 @@ const errors = require("../../../config/errors");
 const commonMiddleware = require("../common");
 
 const loginValidator = [
-  check("email").trim().isEmail().withMessage(errors.auth.invalidEmail).bail(),
+  check("emailOrUsername")
+    .trim()
+    .isString()
+    .isLength({ min: 3, max: 128 })
+    .withMessage(errors.auth.invalidEmailOrUsername)
+    .bail(),
 
   check("password")
     .trim()
@@ -14,12 +19,24 @@ const loginValidator = [
 ];
 
 const registerValidator = [
+  commonMiddleware.checkFile("avatar", ["png", "jpg", "jpeg"], false),
+
   check("name")
     .trim()
     .isLength({ min: 8, max: 64 })
     .withMessage(errors.auth.invalidName),
 
-  check("email").trim().isEmail().withMessage(errors.auth.invalidEmail).bail(),
+  check("email")
+    .trim()
+    .isEmail()
+    .withMessage(errors.auth.invalidEmailOrUsername)
+    .bail(),
+
+  check("username")
+    .trim()
+    .isLength({ min: 3, max: 64 })
+    .withMessage(errors.auth.invalidUsername)
+    .bail(),
 
   check("password")
     .trim()
@@ -39,7 +56,12 @@ const resetPasswordValidator = [
 ];
 
 const forgotPasswordValidator = [
-  check("email").trim().isEmail().withMessage(errors.auth.invalidEmail).bail(),
+  check("emailOrUsername")
+    .trim()
+    .isString()
+    .isLength({ min: 3, max: 128 })
+    .withMessage(errors.auth.invalidEmailOrUsername)
+    .bail(),
 
   check("newPassword")
     .trim()
@@ -49,8 +71,19 @@ const forgotPasswordValidator = [
   commonMiddleware.next,
 ];
 
-const emailValidator = [
-  check("email").trim().isEmail().withMessage(errors.auth.invalidEmail).bail(),
+const validateEmailOrUsername = [
+  (req, res, next) => {
+    req.body.emailOrUsername = req.query.emailOrUsername;
+
+    next();
+  },
+
+  check("emailOrUsername")
+    .trim()
+    .isString()
+    .isLength({ min: 3, max: 128 })
+    .withMessage(errors.auth.invalidEmailOrUsername)
+    .bail(),
 
   commonMiddleware.next,
 ];
@@ -60,5 +93,5 @@ module.exports = {
   registerValidator,
   resetPasswordValidator,
   forgotPasswordValidator,
-  emailValidator,
+  validateEmailOrUsername,
 };

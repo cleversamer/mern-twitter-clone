@@ -2,13 +2,22 @@ const { User } = require("../../models/user.model");
 const jwt = require("jsonwebtoken");
 const httpStatus = require("http-status");
 const emailService = require("./email.service");
+const localStorage = require("../storage/localStorage.service");
 const { ApiError } = require("../../middleware/apiError");
 const errors = require("../../config/errors");
 const bcrypt = require("bcrypt");
 
-module.exports.findUserByEmail = async (email, withError = false) => {
+module.exports.findUserByEmailOrUsername = async (
+  emailOrUsername,
+  withError = false
+) => {
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      $or: [
+        { email: { $eq: emailOrUsername } },
+        { username: { $eq: emailOrUsername } },
+      ],
+    });
 
     if (withError && !user) {
       const statusCode = httpStatus.NOT_FOUND;
@@ -38,12 +47,34 @@ module.exports.validateToken = (token) => {
   }
 };
 
-module.exports.updateProfile = async (user, name, email, password) => {
+module.exports.updateProfile = async (
+  user,
+  name,
+  avatar,
+  email,
+  username,
+  password
+) => {
   try {
     let userChanged = false;
 
     if (name && user.name !== name) {
       user.name = name;
+      userChanged = true;
+    }
+
+    if (avatar) {
+      if (user.avatarURL) {
+        const file = {
+          name: user.avatarURL.substring(1, user.avatarURL.length),
+          path: user.avatarURL,
+        };
+
+        await localStorage.deleteFile(file);
+      }
+
+      const file = await localStorage.storeFile(avatar);
+      user.avatarURL = file.path;
       userChanged = true;
     }
 
@@ -54,8 +85,20 @@ module.exports.updateProfile = async (user, name, email, password) => {
       userChanged = true;
     }
 
+    if (username && user.username !== username) {
+      const usernameUsed = await this.findUserByEmailOrUsername(username);
+      if (usernameUsed) {
+        const statusCode = httpStatus.NOT_FOUND;
+        const message = errors.auth.usernameUsed;
+        throw new ApiError(statusCode, message);
+      }
+
+      user.username = username;
+      userChanged = true;
+    }
+
     if (email && user.email !== email) {
-      const emailUsed = await this.findUserByEmail(email);
+      const emailUsed = await this.findUserByEmailOrUsername(email);
       if (emailUsed) {
         const statusCode = httpStatus.NOT_FOUND;
         const message = errors.auth.emailUsed;
@@ -76,9 +119,9 @@ module.exports.updateProfile = async (user, name, email, password) => {
 };
 
 ///////////////////////////// ADMIN /////////////////////////////
-module.exports.changeUserRole = async (userId, role) => {
+module.exports.changeUserRole = async (emailOrUsername, role) => {
   try {
-    const user = await this.findUserById(userId);
+    const user = await this.findUserByEmailOrUsername(emailOrUsername);
 
     if (!user) {
       const statusCode = httpStatus.NOT_FOUND;
@@ -93,9 +136,9 @@ module.exports.changeUserRole = async (userId, role) => {
   }
 };
 
-module.exports.validateUser = async (userId) => {
+module.exports.verifyUser = async (emailOrUsername) => {
   try {
-    const user = await this.findUserById(userId);
+    const user = await this.findUserByEmailOrUsername(emailOrUsername);
 
     if (!user) {
       const statusCode = httpStatus.NOT_FOUND;
@@ -110,19 +153,55 @@ module.exports.validateUser = async (userId) => {
   }
 };
 
-module.exports.updateUserProfile = async (userId, name, email, password) => {
+module.exports.updateUserProfile = async (
+  emailOrUsername,
+  name,
+  avatar,
+  email,
+  username,
+  password
+) => {
   try {
     let userChanged = false;
 
-    const user = await this.findUserById(userId);
+    const user = await this.findUserByEmailOrUsername(emailOrUsername);
     if (!user) {
       const statusCode = httpStatus.NOT_FOUND;
       const message = errors.user.notFound;
       throw new ApiError(statusCode, message);
     }
 
+    if (avatar) {
+      if (user.avatarURL) {
+        const file = {
+          name: user.avatarURL.substring(1, user.avatarURL.length),
+          path: user.avatarURL,
+        };
+
+        console.log(file);
+
+        await localStorage.deleteFile(file);
+      }
+
+      const file = await localStorage.storeFile(avatar);
+      user.avatarURL = file.path;
+      userChanged = true;
+    }
+
     if (name && user.name !== name) {
       user.name = name;
+      userChanged = true;
+    }
+
+    if (username && user.username !== username) {
+      const usernameUsed = await this.findUserByEmailOrUsername(username);
+      if (usernameUsed) {
+        const statusCode = httpStatus.NOT_FOUND;
+        const message = errors.auth.usernameUsed;
+        throw new ApiError(statusCode, message);
+      }
+
+      user.username = username;
       userChanged = true;
     }
 
@@ -134,7 +213,7 @@ module.exports.updateUserProfile = async (userId, name, email, password) => {
     }
 
     if (email && user.email !== email) {
-      const emailUsed = await this.findUserByEmail(email);
+      const emailUsed = await this.findUserByEmailOrUsername(email);
       if (emailUsed) {
         const statusCode = httpStatus.NOT_FOUND;
         const message = errors.auth.emailUsed;
